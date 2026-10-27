@@ -13,6 +13,7 @@ import { EventsView } from "./components/views/EventsView";
 import { LogSourcesView } from "./components/views/LogSourcesView";
 import { DetectionRulesView } from "./components/views/DetectionRulesView";
 import { ReportsView } from "./components/views/ReportsView";
+import { API_BASE_URL } from "./api/client";
 import { fetchSystemHealth } from "./api/health";
 import {
   fetchDashboardSummary,
@@ -209,6 +210,33 @@ export const App: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Backend Connectivity Failure Notice */}
+          {healthError && !demoMode && (
+            <div className="p-3.5 rounded bg-amber-950/70 border border-amber-800/80 text-amber-200 text-xs font-mono flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <AlertOctagon className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>
+                  Backend API is unreachable (<span className="text-amber-300 font-semibold">{healthError}</span>).
+                  Verify FastAPI is running on <code className="text-amber-300 bg-black/40 px-1 py-0.5 rounded">{API_BASE_URL}</code> or explore with demonstration telemetry.
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setDemoMode(true)}
+                  className="px-2.5 py-1 bg-amber-900/80 hover:bg-amber-800 text-amber-100 rounded text-[11px] font-semibold transition-colors"
+                >
+                  Enable Demo Mode
+                </button>
+                <button
+                  onClick={loadHealth}
+                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] border border-slate-700 transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Error Banner if Summary Query Failed */}
           {summaryError && (
