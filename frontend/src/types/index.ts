@@ -36,6 +36,26 @@ export type IncidentStatus =
   | "post_incident_review"
   | "closed";
 
+export type LogSourceType =
+  | "syslog"
+  | "windows_event_log"
+  | "auditd"
+  | "zeek_network"
+  | "suricata_nids"
+  | "cloudtrail"
+  | "kubernetes"
+  | "application_json"
+  | "custom";
+
+export type LogSourceStatus = "active" | "degraded" | "inactive" | "error";
+
+export type IngestionJobStatus =
+  | "pending"
+  | "running"
+  | "completed"
+  | "failed"
+  | "partially_failed";
+
 export interface SubsystemHealth {
   status: "healthy" | "connected" | "degraded" | "disconnected" | "unknown";
   latency_ms?: number | null;
@@ -107,6 +127,79 @@ export interface IncidentItem {
   closed_at?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface NormalizedSecurityEventItem {
+  id: string;
+  log_source_id: string;
+  log_source_name?: string | null;
+  timestamp: string;
+  ingested_at: string;
+  event_type: string;
+  event_action: string;
+  severity: EventSeverity;
+  source_ip?: string | null;
+  source_port?: number | null;
+  destination_ip?: string | null;
+  destination_port?: number | null;
+  protocol?: string | null;
+  user_name?: string | null;
+  host_name?: string | null;
+  process_name?: string | null;
+  process_path?: string | null;
+  command_line?: string | null;
+  raw_payload: string;
+  event_hash: string;
+  extra_fields?: Record<string, unknown> | null;
+}
+
+export interface LogSourceItem {
+  id: string;
+  name: string;
+  source_type: LogSourceType;
+  description?: string | null;
+  ip_address?: string | null;
+  hostname?: string | null;
+  status: LogSourceStatus;
+  retention_days: number;
+  config_metadata?: Record<string, unknown> | null;
+  total_events: number;
+  total_jobs: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RejectedRecordItem {
+  line_number: number;
+  reason: string;
+  raw_snippet?: string | null;
+}
+
+export interface IngestionJobItem {
+  id: string;
+  log_source_id: string;
+  status: IngestionJobStatus;
+  batch_identifier?: string | null;
+  events_processed: number;
+  events_failed: number;
+  bytes_ingested: number;
+  error_message?: string | null;
+  rejected_records?: RejectedRecordItem[] | null;
+  started_at: string;
+  completed_at?: string | null;
+}
+
+export interface IngestionUploadResponse {
+  job_id: string;
+  status: IngestionJobStatus;
+  source_id: string;
+  source_name: string;
+  events_processed: number;
+  events_failed: number;
+  bytes_ingested: number;
+  is_duplicate_batch: boolean;
+  message: string;
+  rejected_summary?: RejectedRecordItem[] | null;
 }
 
 export interface PaginatedResponse<T> {

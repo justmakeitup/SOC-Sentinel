@@ -1,6 +1,6 @@
 /**
  * Development demonstration data for UI inspection and review.
- * 
+ *
  * STRICT COMPLIANCE NOTE:
  * These records are strictly utilized for development evaluation when explicitly
  * enabled via the "Demo Mode" toggle in the header. They are NEVER mixed with live
@@ -8,9 +8,12 @@
  */
 
 import {
-  DashboardSummary,
   AlertItem,
+  DashboardSummary,
   IncidentItem,
+  IngestionJobItem,
+  LogSourceItem,
+  NormalizedSecurityEventItem,
   PaginatedResponse,
 } from "../types";
 
@@ -133,51 +136,6 @@ export const DEMO_ALERTS: AlertItem[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 115).toISOString(),
     updated_at: new Date(Date.now() - 1000 * 60 * 115).toISOString(),
   },
-  {
-    id: "alt-006",
-    rule_id: "rule-cloud-001",
-    rule_code: "SEC-CLOUD-001",
-    rule_name: "Root Account Cloud Console Login Without MFA",
-    title: "AWS Root credential login observed without MFA verification",
-    description: "Root console login detected from IP address not in corporate VPN range without hardware token.",
-    severity: "critical",
-    status: "investigating",
-    source_ip: "203.0.113.8",
-    deduplication_key: "SEC-CLOUD-001:203.0.113.8:20261027",
-    event_count: 1,
-    created_at: new Date(Date.now() - 1000 * 60 * 160).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
-  },
-  {
-    id: "alt-007",
-    rule_id: "rule-pol-002",
-    rule_code: "SEC-POL-002",
-    rule_name: "Unauthorized USB Storage Device Attached",
-    title: "Mass storage USB insertion on engineering CAD workstation",
-    description: "Removable media mounted violating enterprise endpoint hardware isolation policy.",
-    severity: "low",
-    status: "closed_resolved",
-    source_ip: "10.0.8.22",
-    deduplication_key: "SEC-POL-002:10.0.8.22:20261027",
-    event_count: 1,
-    created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-  },
-  {
-    id: "alt-008",
-    rule_id: "rule-net-009",
-    rule_code: "SEC-NET-009",
-    rule_name: "Tor Exit Node Communication",
-    title: "Outbound HTTPS connection to known Tor relay node",
-    description: "Workstation established TLS session to known Tor directory exit authority.",
-    severity: "medium",
-    status: "closed_false_positive",
-    source_ip: "10.0.5.19",
-    deduplication_key: "SEC-NET-009:10.0.5.19:20261027",
-    event_count: 6,
-    created_at: new Date(Date.now() - 1000 * 60 * 360).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 300).toISOString(),
-  },
 ];
 
 export const DEMO_INCIDENTS: IncidentItem[] = [
@@ -205,29 +163,142 @@ export const DEMO_INCIDENTS: IncidentItem[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
     updated_at: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
   },
+];
+
+export const DEMO_EVENTS: NormalizedSecurityEventItem[] = [
   {
-    id: "inc-003",
-    incident_number: "INC-2026-0039",
-    title: "Unsanctioned Cloud S3 Bucket Public Access Exposure",
-    summary: "Marketing analytics test bucket misconfigured with public read ACL containing log exports.",
-    severity: "sev_3_medium",
-    status: "recovery",
-    lead_analyst_name: "Marcus Vance",
-    containment_details: "Bucket policy reset to private; IAM credential rotated.",
-    created_at: new Date(Date.now() - 1000 * 60 * 420).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 95).toISOString(),
+    id: "ev-001",
+    log_source_id: "src-001",
+    log_source_name: "Core-Firewall-Primary",
+    timestamp: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
+    ingested_at: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
+    event_type: "network_flow",
+    event_action: "connection_blocked",
+    severity: "medium",
+    source_ip: "198.51.100.24",
+    source_port: 51240,
+    destination_ip: "10.0.1.5",
+    destination_port: 22,
+    protocol: "TCP",
+    user_name: "root",
+    host_name: "bastion.internal.corp",
+    raw_payload: "Oct 27 15:40:12 fw01 kernel: DROP IN=eth0 OUT=eth1 SRC=198.51.100.24 DST=10.0.1.5 PROTO=TCP SPT=51240 DPT=22",
+    event_hash: "3a9f0e1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f",
   },
   {
-    id: "inc-004",
-    incident_number: "INC-2026-0036",
-    title: "Phishing Campaign Targeting Payroll Accounts",
-    summary: "12 credential harvesting emails quarantined by secure mail gateway.",
-    severity: "sev_4_low",
-    status: "closed",
-    lead_analyst_name: "Elena Rostova",
-    containment_details: "Domain blocklist updated; sender IP banned across gateway.",
-    created_at: new Date(Date.now() - 1000 * 60 * 1400).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
+    id: "ev-002",
+    log_source_id: "src-002",
+    log_source_name: "AD-Domain-Controller-01",
+    timestamp: new Date(Date.now() - 1000 * 60 * 7).toISOString(),
+    ingested_at: new Date(Date.now() - 1000 * 60 * 6).toISOString(),
+    event_type: "authentication",
+    event_action: "login_failed",
+    severity: "high",
+    source_ip: "10.0.4.88",
+    source_port: 49152,
+    destination_ip: "10.0.0.1",
+    destination_port: 88,
+    protocol: "TCP",
+    user_name: "svc_backup",
+    host_name: "DC01.sentinel.sec",
+    raw_payload: "EventID=4625 LogonType=3 Status=0xC000006A User=svc_backup Host=DC01 CallerIP=10.0.4.88",
+    event_hash: "1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c",
+  },
+  {
+    id: "ev-003",
+    log_source_id: "src-003",
+    log_source_name: "Host-Agent-Workstation",
+    timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    ingested_at: new Date(Date.now() - 1000 * 60 * 14).toISOString(),
+    event_type: "process_execution",
+    event_action: "process_spawned",
+    severity: "critical",
+    source_ip: "10.0.2.14",
+    user_name: "jdoe",
+    host_name: "WS-ENG-042",
+    process_name: "powershell.exe",
+    process_path: "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    command_line: "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command [REDACTED]",
+    raw_payload: "Sysmon EventID=1 Image=powershell.exe User=WS-ENG-042\\jdoe CommandLine=powershell.exe -NoProfile -ExecutionPolicy Bypass",
+    event_hash: "4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f",
+  },
+];
+
+export const DEMO_LOG_SOURCES: LogSourceItem[] = [
+  {
+    id: "src-001",
+    name: "Core-Firewall-Primary",
+    source_type: "suricata_nids",
+    description: "Perimeter NIDS & firewall traffic collector",
+    ip_address: "192.168.1.1",
+    hostname: "fw01.sentinel.sec",
+    status: "active",
+    retention_days: 90,
+    total_events: 84120,
+    total_jobs: 14,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "src-002",
+    name: "AD-Domain-Controller-01",
+    source_type: "windows_event_log",
+    description: "Kerberos & Windows Security Event Forwarding",
+    ip_address: "10.0.0.1",
+    hostname: "dc01.sentinel.sec",
+    status: "active",
+    retention_days: 180,
+    total_events: 51240,
+    total_jobs: 22,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "src-003",
+    name: "Cloud-Kube-Audit",
+    source_type: "kubernetes",
+    description: "Kubernetes API server audit stream",
+    ip_address: "10.244.0.1",
+    hostname: "k8s-control.sentinel.sec",
+    status: "active",
+    retention_days: 60,
+    total_events: 7490,
+    total_jobs: 8,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+export const DEMO_INGESTION_JOBS: IngestionJobItem[] = [
+  {
+    id: "job-001",
+    log_source_id: "src-001",
+    status: "completed",
+    batch_identifier: "batch-auth-daily-20261027",
+    events_processed: 450,
+    events_failed: 0,
+    bytes_ingested: 65420,
+    error_message: null,
+    rejected_records: [],
+    started_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    completed_at: new Date(Date.now() - 1000 * 60 * 44).toISOString(),
+  },
+  {
+    id: "job-002",
+    log_source_id: "src-002",
+    status: "partially_failed",
+    batch_identifier: "batch-fw-sample-20261027",
+    events_processed: 120,
+    events_failed: 3,
+    bytes_ingested: 21450,
+    error_message: "3 malformed or invalid records quarantined during validation.",
+    rejected_records: [
+      { line_number: 14, reason: "Invalid IP address format: '999.999.999.999'", raw_snippet: "2026-10-27T10:00:00Z,user,ALLOW,999.999.999.999" },
+      { line_number: 28, reason: "Port number 88888 out of range 1-65535", raw_snippet: "2026-10-27T10:05:00Z,admin,BLOCK,10.0.0.1,88888" },
+      { line_number: 42, reason: "Missing required timestamp field", raw_snippet: ",guest,DENY,10.0.0.2,443" },
+    ],
+    started_at: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+    completed_at: new Date(Date.now() - 1000 * 60 * 89).toISOString(),
   },
 ];
 
@@ -239,21 +310,14 @@ export function getDemoFilteredAlerts(params: {
   search?: string;
 }): PaginatedResponse<AlertItem> {
   const { page = 1, pageSize = 10, severity, status, search } = params;
-
   let filtered = [...DEMO_ALERTS];
 
   if (severity && severity.toLowerCase() !== "all") {
-    filtered = filtered.filter(
-      (a) => a.severity.toLowerCase() === severity.toLowerCase()
-    );
+    filtered = filtered.filter((a) => a.severity.toLowerCase() === severity.toLowerCase());
   }
-
   if (status && status.toLowerCase() !== "all") {
-    filtered = filtered.filter(
-      (a) => a.status.toLowerCase() === status.toLowerCase()
-    );
+    filtered = filtered.filter((a) => a.status.toLowerCase() === status.toLowerCase());
   }
-
   if (search && search.trim()) {
     const term = search.toLowerCase().trim();
     filtered = filtered.filter(
@@ -270,13 +334,7 @@ export function getDemoFilteredAlerts(params: {
   const offset = (page - 1) * pageSize;
   const items = filtered.slice(offset, offset + pageSize);
 
-  return {
-    items,
-    total_count: totalCount,
-    page,
-    page_size: pageSize,
-    total_pages: totalPages,
-  };
+  return { items, total_count: totalCount, page, page_size: pageSize, total_pages: totalPages };
 }
 
 export function getDemoFilteredIncidents(params: {
@@ -286,16 +344,50 @@ export function getDemoFilteredIncidents(params: {
   let filtered = [...DEMO_INCIDENTS];
 
   if (status && status.toLowerCase() !== "all") {
+    filtered = filtered.filter((i) => i.status.toLowerCase() === status.toLowerCase());
+  }
+
+  return { items: filtered, total_count: filtered.length, page: 1, page_size: 10, total_pages: 1 };
+}
+
+export function getDemoFilteredEvents(params: {
+  page?: number;
+  pageSize?: number;
+  eventType?: string;
+  severity?: string;
+  search?: string;
+}): PaginatedResponse<NormalizedSecurityEventItem> {
+  const { page = 1, pageSize = 10, eventType, severity, search } = params;
+  let filtered = [...DEMO_EVENTS];
+
+  if (eventType && eventType.toLowerCase() !== "all") {
+    filtered = filtered.filter((e) => e.event_type.toLowerCase() === eventType.toLowerCase());
+  }
+  if (severity && severity.toLowerCase() !== "all") {
+    filtered = filtered.filter((e) => e.severity.toLowerCase() === severity.toLowerCase());
+  }
+  if (search && search.trim()) {
+    const term = search.toLowerCase().trim();
     filtered = filtered.filter(
-      (i) => i.status.toLowerCase() === status.toLowerCase()
+      (e) =>
+        e.event_action.toLowerCase().includes(term) ||
+        (e.user_name && e.user_name.toLowerCase().includes(term)) ||
+        (e.source_ip && e.source_ip.toLowerCase().includes(term)) ||
+        (e.destination_ip && e.destination_ip.toLowerCase().includes(term)) ||
+        (e.host_name && e.host_name.toLowerCase().includes(term))
     );
   }
 
-  return {
-    items: filtered,
-    total_count: filtered.length,
-    page: 1,
-    page_size: 10,
-    total_pages: 1,
-  };
+  const totalCount = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const offset = (page - 1) * pageSize;
+  return { items: filtered.slice(offset, offset + pageSize), total_count: totalCount, page, page_size: pageSize, total_pages: totalPages };
+}
+
+export function getDemoLogSources(page: number = 1, pageSize: number = 10): PaginatedResponse<LogSourceItem> {
+  return { items: DEMO_LOG_SOURCES, total_count: DEMO_LOG_SOURCES.length, page, page_size: pageSize, total_pages: 1 };
+}
+
+export function getDemoIngestionJobs(page: number = 1, pageSize: number = 10): PaginatedResponse<IngestionJobItem> {
+  return { items: DEMO_INGESTION_JOBS, total_count: DEMO_INGESTION_JOBS.length, page, page_size: pageSize, total_pages: 1 };
 }

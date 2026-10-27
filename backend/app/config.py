@@ -61,6 +61,17 @@ class Settings(BaseSettings):
         description="Primary PostgreSQL database connection string",
     )
 
+    # Ingestion Subsystem Configuration
+    MAX_UPLOAD_SIZE_BYTES: int = Field(
+        default=10 * 1024 * 1024,  # 10 MB limit
+        description="Maximum accepted file upload size in bytes",
+    )
+    MAX_RECORDS_PER_IMPORT: int = Field(
+        default=10000,
+        description="Maximum number of telemetry records processed in a single batch",
+    )
+    ALLOWED_EXTENSIONS: List[str] = [".csv", ".json", ".jsonl", ".log"]
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

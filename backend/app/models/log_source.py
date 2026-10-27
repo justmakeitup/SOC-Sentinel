@@ -158,6 +158,11 @@ class IngestionJob(Base, PrimaryKeyUUIDMixin):
         nullable=True,
         doc="Traceback or descriptive reason in case of pipeline failure",
     )
+    rejected_records: Mapped[Optional[list]] = mapped_column(
+        JSON,
+        nullable=True,
+        doc="Detailed summaries of malformed rows with line numbers and validation reasons",
+    )
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=utc_now,

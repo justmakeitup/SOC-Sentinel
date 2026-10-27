@@ -6,6 +6,8 @@ import { SeverityDistributionChart } from "./components/dashboard/SeverityDistri
 import { AlertsTable } from "./components/dashboard/AlertsTable";
 import { IncidentActivityPanel } from "./components/dashboard/IncidentActivityPanel";
 import { GenericModuleView } from "./components/views/GenericModuleView";
+import { EventsView } from "./components/views/EventsView";
+import { LogSourcesView } from "./components/views/LogSourcesView";
 import { fetchSystemHealth } from "./api/health";
 import {
   fetchDashboardSummary,
@@ -26,8 +28,6 @@ import {
   ShieldAlert,
   FolderGit2,
   AlertOctagon,
-  Layers,
-  Radio,
   FileCode,
   FileSpreadsheet,
   Settings,
@@ -363,40 +363,12 @@ export const App: React.FC = () => {
 
       {/* View 4: Events Telemetry View */}
       {currentView === "events" && (
-        <GenericModuleView
-          title="Normalized Security Events"
-          subtitle="Unified ECS telemetry schema with cryptographic SHA-256 deduplication"
-          icon={Layers}
-          badge="Telemetry Schema"
-          description="Security telemetry emitted by Syslog collectors, Windows Event Forwarders, Zeek sensors, and CloudTrail is harmonized into an Elastic Common Schema (ECS) representation. Every event is verified against an immutable SHA-256 hash preventing duplicate processing."
-          architectureDetails={[
-            { label: "Taxonomy", value: "ECS / OSSEM Standard" },
-            { label: "Deduplication", value: "SHA-256 event_hash (Indexed)" },
-            { label: "Index Strategy", value: "Compound (source_id, timestamp)" },
-            { label: "Forensic Payload", value: "Preserved in raw_payload column" },
-          ]}
-          onBackToOverview={() => setCurrentView("overview")}
-          demoMode={demoMode}
-        />
+        <EventsView demoMode={demoMode} onEnableDemo={() => setDemoMode(true)} />
       )}
 
       {/* View 5: Log Sources View */}
       {currentView === "sources" && (
-        <GenericModuleView
-          title="Log Sources & Collectors"
-          subtitle="Sensor fleet registration, ingestion jobs, and parser health"
-          icon={Radio}
-          badge="Ingestion Subsystem"
-          description="Register and manage network collectors (Syslog, Windows Event Forwarding, Suricata NIDS, Zeek). Each ingestion job tracks processed events, failed logs, byte volumes, and batch fingerprint identifiers to guarantee idempotency."
-          architectureDetails={[
-            { label: "Supported Types", value: "Syslog, WinEvent, Zeek, Suricata, Custom" },
-            { label: "Batch Protection", value: "batch_identifier fingerprinting" },
-            { label: "Retention Policy", value: "Configurable per source (default 90d)" },
-            { label: "Parser Pipeline", value: "FastAPI Streaming & Ingestion Engine" },
-          ]}
-          onBackToOverview={() => setCurrentView("overview")}
-          demoMode={demoMode}
-        />
+        <LogSourcesView demoMode={demoMode} onEnableDemo={() => setDemoMode(true)} />
       )}
 
       {/* View 6: Detection Rules View */}

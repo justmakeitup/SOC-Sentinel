@@ -3,7 +3,18 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { App } from "../App";
 import * as healthApi from "../api/health";
 import * as dashboardApi from "../api/dashboard";
-import { HealthResponse, DashboardSummary, PaginatedResponse, AlertItem, IncidentItem } from "../types";
+import * as eventsApi from "../api/events";
+import * as sourcesApi from "../api/sources";
+import {
+  HealthResponse,
+  DashboardSummary,
+  PaginatedResponse,
+  AlertItem,
+  IncidentItem,
+  NormalizedSecurityEventItem,
+  LogSourceItem,
+  IngestionJobItem,
+} from "../types";
 
 const mockHealth: HealthResponse = {
   status: "healthy",
@@ -49,13 +60,40 @@ const mockIncidentsEmpty: PaginatedResponse<IncidentItem> = {
   total_pages: 1,
 };
 
-describe("Sentinel Complete Frontend SOC Dashboard", () => {
+const mockEventsEmpty: PaginatedResponse<NormalizedSecurityEventItem> = {
+  items: [],
+  total_count: 0,
+  page: 1,
+  page_size: 15,
+  total_pages: 1,
+};
+
+const mockSourcesEmpty: PaginatedResponse<LogSourceItem> = {
+  items: [],
+  total_count: 0,
+  page: 1,
+  page_size: 10,
+  total_pages: 1,
+};
+
+const mockJobsEmpty: PaginatedResponse<IngestionJobItem> = {
+  items: [],
+  total_count: 0,
+  page: 1,
+  page_size: 10,
+  total_pages: 1,
+};
+
+describe("Sentinel Complete Frontend SOC Dashboard & Ingestion", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.spyOn(healthApi, "fetchSystemHealth").mockResolvedValue(mockHealth);
     vi.spyOn(dashboardApi, "fetchDashboardSummary").mockResolvedValue(mockSummaryEmpty);
     vi.spyOn(dashboardApi, "fetchAlerts").mockResolvedValue(mockAlertsEmpty);
     vi.spyOn(dashboardApi, "fetchIncidents").mockResolvedValue(mockIncidentsEmpty);
+    vi.spyOn(eventsApi, "fetchEvents").mockResolvedValue(mockEventsEmpty);
+    vi.spyOn(sourcesApi, "fetchLogSources").mockResolvedValue(mockSourcesEmpty);
+    vi.spyOn(sourcesApi, "fetchIngestionJobs").mockResolvedValue(mockJobsEmpty);
   });
 
   it("renders the SOC dashboard shell with all 4 summary KPI cards in empty state", async () => {
@@ -154,26 +192,36 @@ describe("Sentinel Complete Frontend SOC Dashboard", () => {
     });
   });
 
-  it("switches navigation views cleanly when clicking sidebar items", async () => {
+  it("navigates to Events view and shows Import Log File action", async () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getAllByText("Detection Rules").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Events").length).toBeGreaterThan(0);
     });
 
-    const rulesButtons = screen.getAllByText("Detection Rules");
-    fireEvent.click(rulesButtons[0]);
+    const eventsButtons = screen.getAllByText("Events");
+    fireEvent.click(eventsButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText("Detection Engineering")).toBeInTheDocument();
-      expect(screen.getByText(/MITRE Enterprise ATT&CK/i)).toBeInTheDocument();
+      expect(screen.getByText("Normalized Security Telemetry")).toBeInTheDocument();
+      expect(screen.getByText("Import Log File")).toBeInTheDocument();
+    });
+  });
+
+  it("navigates to Log Sources view and displays fleet management", async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Log Sources").length).toBeGreaterThan(0);
     });
 
-    const backButton = screen.getByTitle("Back to Overview");
-    fireEvent.click(backButton);
+    const sourcesButtons = screen.getAllByText("Log Sources");
+    fireEvent.click(sourcesButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText("Security Operations Center Overview")).toBeInTheDocument();
+      expect(screen.getByText("Log Sources & Ingestion Pipeline")).toBeInTheDocument();
+      expect(screen.getByText("Register Sensor")).toBeInTheDocument();
+      expect(screen.getByText(/Ingestion Job History & Quarantine Audit/i)).toBeInTheDocument();
     });
   });
 });
