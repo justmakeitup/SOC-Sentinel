@@ -1,6 +1,7 @@
 """Incident response case management and chronological analyst investigation notes."""
 
 import enum
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
@@ -32,9 +33,11 @@ class IncidentSeverity(str, enum.Enum):
 class IncidentStatus(str, enum.Enum):
     """Incident handling lifecycle phases aligned with NIST SP 800-61 Rev 2."""
     OPEN = "open"                                  # Initial escalation and scope verification
+    INVESTIGATING = "investigating"                # Active forensic inquiry and triage
     CONTAINMENT = "containment"                    # Short/long-term containment measures applied
     ERADICATION = "eradication"                    # Root cause and persistence mechanisms removed
     RECOVERY = "recovery"                          # Restoring systems to clean production operations
+    RESOLVED = "resolved"                          # Remediated and verified
     POST_INCIDENT_REVIEW = "post_incident_review"  # Lessons learned and timeline retrospective
     CLOSED = "closed"                              # Incident officially concluded
 
@@ -83,7 +86,7 @@ class Incident(Base, PrimaryKeyUUIDMixin, TimestampMixin):
         nullable=False,
         index=True,
     )
-    lead_analyst_id: Mapped[Optional[str]] = mapped_column(
+    lead_analyst_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
@@ -134,13 +137,13 @@ class InvestigationNote(Base, PrimaryKeyUUIDMixin, TimestampMixin):
 
     __tablename__ = "investigation_notes"
 
-    incident_id: Mapped[str] = mapped_column(
+    incident_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("incidents.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
         doc="Parent incident case",
     )
-    author_id: Mapped[str] = mapped_column(
+    author_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,

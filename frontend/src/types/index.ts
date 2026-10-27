@@ -30,11 +30,68 @@ export type IncidentSeverity =
 
 export type IncidentStatus =
   | "open"
+  | "investigating"
   | "containment"
   | "eradication"
   | "recovery"
+  | "resolved"
   | "post_incident_review"
   | "closed";
+
+export type NoteType =
+  | "analysis"
+  | "containment_action"
+  | "forensic_evidence"
+  | "communication"
+  | "general";
+
+export interface InvestigationNoteItem {
+  id: string;
+  incident_id: string;
+  author_id: string;
+  author_name?: string | null;
+  note_type: NoteType;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IncidentTimelineItem {
+  id: string;
+  timestamp: string;
+  event_type: string;
+  title: string;
+  description?: string | null;
+  actor_name?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export interface IncidentDetail extends IncidentItem {
+  alerts: AlertItem[];
+  notes: InvestigationNoteItem[];
+  timeline: IncidentTimelineItem[];
+  linked_event_count: number;
+}
+
+export interface IncidentCreatePayload {
+  title: string;
+  summary: string;
+  severity?: IncidentSeverity;
+  status?: IncidentStatus;
+  incident_number?: string;
+  alert_ids?: string[];
+  containment_details?: string;
+}
+
+export interface IncidentUpdatePayload {
+  title?: string;
+  summary?: string;
+  severity?: IncidentSeverity;
+  status?: IncidentStatus;
+  lead_analyst_id?: string;
+  containment_details?: string;
+  lessons_learned?: string;
+}
 
 export type LogSourceType =
   | "syslog"

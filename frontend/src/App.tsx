@@ -6,6 +6,8 @@ import { SeverityDistributionChart } from "./components/dashboard/SeverityDistri
 import { AlertsTable } from "./components/dashboard/AlertsTable";
 import { IncidentActivityPanel } from "./components/dashboard/IncidentActivityPanel";
 import { AlertInspectionModal } from "./components/dashboard/AlertInspectionModal";
+import { IncidentDetailModal } from "./components/incidents/IncidentDetailModal";
+import { CreateIncidentModal } from "./components/incidents/CreateIncidentModal";
 import { GenericModuleView } from "./components/views/GenericModuleView";
 import { EventsView } from "./components/views/EventsView";
 import { LogSourcesView } from "./components/views/LogSourcesView";
@@ -33,12 +35,14 @@ import {
   FileSpreadsheet,
   Settings,
   RefreshCw,
+  Plus,
 } from "lucide-react";
 
 export const App: React.FC = () => {
   // Navigation & Mode
   const [currentView, setCurrentView] = useState<NavView>("overview");
   const [demoMode, setDemoMode] = useState<boolean>(false);
+  const [isCreateIncidentOpen, setIsCreateIncidentOpen] = useState<boolean>(false);
 
   // Subsystem Health
   const [health, setHealth] = useState<HealthResponse | null>(null);
@@ -349,6 +353,13 @@ export const App: React.FC = () => {
                 Case file management following NIST SP 800-61 Rev 2 guidelines.
               </p>
             </div>
+            <button
+              onClick={() => setIsCreateIncidentOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold text-xs font-mono transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Declare Incident
+            </button>
           </div>
           <IncidentActivityPanel
             incidentsResponse={incidentsResponse}
@@ -432,55 +443,45 @@ export const App: React.FC = () => {
             loadAlerts();
             loadSummary();
           }}
+          onEscalated={(incidentId) => {
+            setSelectedAlert(null);
+            loadAlerts();
+            loadIncidents();
+            loadSummary();
+            setSelectedIncident({ id: incidentId } as any);
+          }}
         />
       )}
 
-      {/* Incident Case Detail Modal */}
+      {/* Incident Case Detail Dossier Modal */}
       {selectedIncident && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121820] border border-[#1E293B] rounded-lg max-w-lg w-full p-5 space-y-4 font-mono">
-            <div className="flex items-center justify-between border-b border-[#1E293B] pb-3">
-              <div className="flex items-center gap-2">
-                <FolderGit2 className="w-4 h-4 text-teal-400" />
-                <span className="text-xs font-bold text-slate-100 uppercase">
-                  Incident Case File: {selectedIncident.incident_number}
-                </span>
-              </div>
-              <button
-                onClick={() => setSelectedIncident(null)}
-                className="text-xs text-slate-400 hover:text-slate-200"
-              >
-                [Close]
-              </button>
-            </div>
-            <div className="space-y-2 text-xs">
-              <div className="text-sm font-semibold text-slate-200">{selectedIncident.title}</div>
-              <p className="text-slate-400 text-[11px] leading-relaxed">
-                {selectedIncident.summary}
-              </p>
-              {selectedIncident.containment_details && (
-                <div className="p-2.5 rounded bg-[#0B0F14] border border-[#1E293B] space-y-1">
-                  <div className="text-[10px] text-amber-400 font-bold uppercase">Containment Measures Taken:</div>
-                  <div className="text-[11px] text-slate-300 leading-relaxed">
-                    {selectedIncident.containment_details}
-                  </div>
-                </div>
-              )}
-              <div className="pt-2 border-t border-[#1E293B] space-y-1 text-[11px] text-slate-300">
-                <div>LEAD ANALYST: <span className="text-teal-400">{selectedIncident.lead_analyst_name || "Unassigned"}</span></div>
-                <div>LIFECYCLE STATUS: <span className="text-slate-200 uppercase">{selectedIncident.status}</span></div>
-              </div>
-            </div>
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setSelectedIncident(null)}
-                className="px-3 py-1.5 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-              >
-                Close Case Review
-              </button>
-            </div>
-          </div>
-        </div>
+        <IncidentDetailModal
+          incident={selectedIncident}
+          demoMode={demoMode}
+          onClose={() => setSelectedIncident(null)}
+          onIncidentUpdated={() => {
+            loadIncidents();
+            loadSummary();
+          }}
+          onInspectAlert={(alertId) => {
+            setSelectedIncident(null);
+            setSelectedAlert({ id: alertId } as any);
+          }}
+        />
+      )}
+
+      {/* Create Incident Case Modal */}
+      {isCreateIncidentOpen && (
+        <CreateIncidentModal
+          demoMode={demoMode}
+          onClose={() => setIsCreateIncidentOpen(false)}
+          onCreated={(newInc) => {
+            setIsCreateIncidentOpen(false);
+            loadIncidents();
+            loadSummary();
+            setSelectedIncident(newInc);
+          }}
+        />
       )}
     </Shell>
   );

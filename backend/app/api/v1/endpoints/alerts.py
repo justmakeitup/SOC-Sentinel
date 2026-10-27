@@ -3,17 +3,23 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
+from app.auth.dependencies import get_current_user
 from app.database import get_db
 from app.engine.schemas import AlertDetailResponse, AlertStatusUpdateRequest
 from app.models.alert import AlertStatus, SecurityAlert
 from app.models.event import NormalizedSecurityEvent
+from app.models.incident import IncidentSeverity
 from app.models.rule import DetectionRule, RuleSeverity
+from app.models.user import User
 from app.schemas.alert import SecurityAlertRead
 from app.schemas.common import PaginatedResponse
+from app.schemas.incident import IncidentCreate, IncidentDetailResponse
+from app.services import incident_service
 
 router = APIRouter(prefix="/alerts", tags=["Security Alerts"])
 
@@ -229,3 +235,78 @@ def update_alert_status(
     db.refresh(alert)
 
     return get_alert_detail(alert_id=alert_id, db=db)
+
+
+class EscalateAlertRequest(BaseModel):
+    title: Optional[str] = None
+    summary: Optional[str] = None
+    severity: Optional[IncidentSeverity] = None
+    existing_incident_id: Optional[UUID] = None
+
+
+@router.post(
+    "/{alert_id}/escalate",
+    response_model=IncidentDetailResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Escalate security alert into an Incident case file",
+)
+def escalate_alert_to_incident(
+    alert_id: UUID,
+    request: Request,
+    payload: Optional[EscalateAlertRequest] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> IncidentDetailResponse:
+    """Promotes an alert into a new incident case or links it to an ongoing incident."""
+    alert = db.query(SecurityAlert).filter(SecurityAlert.id == alert_id).first()
+    if not alert:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Security alert '{alert_id}' not found.",
+        )
+
+    client_ip = request.client.host if request and request.client else None
+
+    # Check if linking to existing incident
+    if payload and payload.existing_incident_id:
+        incident_service.link_alerts_to_incident(
+            db=db,
+            incident_id=payload.existing_incident_id,
+            alert_ids=[alert_id],
+            actor=current_user,
+            client_ip=client_ip,
+        )
+        return incident_service.get_incident_detail(db=db, incident_id=payload.existing_incident_id)
+
+    # Map severity
+    sev_map = {
+        RuleSeverity.CRITICAL: IncidentSeverity.SEV_1_CRITICAL,
+        RuleSeverity.HIGH: IncidentSeverity.SEV_2_HIGH,
+        RuleSeverity.MEDIUM: IncidentSeverity.SEV_3_MEDIUM,
+        RuleSeverity.LOW: IncidentSeverity.SEV_4_LOW,
+    }
+    default_sev = sev_map.get(alert.severity, IncidentSeverity.SEV_3_MEDIUM)
+
+    title = (payload.title if payload and payload.title else None) or f"Investigation: {alert.title}"
+    summary = (
+        payload.summary if payload and payload.summary else None
+    ) or f"Escalated from security alert {alert.id}. {alert.description}"
+    severity = (payload.severity if payload and payload.severity else None) or default_sev
+
+    create_data = IncidentCreate(
+        title=title,
+        summary=summary,
+        severity=severity,
+        alert_ids=[alert.id],
+        lead_analyst_id=current_user.id,
+    )
+
+    incident = incident_service.create_incident(
+        db=db,
+        data=create_data,
+        actor=current_user,
+        client_ip=client_ip,
+    )
+
+    return incident_service.get_incident_detail(db=db, incident_id=incident.id)
+

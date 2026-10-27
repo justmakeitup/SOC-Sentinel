@@ -13,13 +13,16 @@ import {
   AlertCircle,
   FileText,
   Activity,
+  FolderGit2,
 } from "lucide-react";
+import { escalateAlertToIncident } from "../../api/incidents";
 
 interface AlertInspectionModalProps {
   alert: AlertItem;
   demoMode: boolean;
   onClose: () => void;
   onStatusUpdated?: (updated: AlertDetail) => void;
+  onEscalated?: (incidentId: string) => void;
 }
 
 export const AlertInspectionModal: React.FC<AlertInspectionModalProps> = ({
@@ -27,11 +30,13 @@ export const AlertInspectionModal: React.FC<AlertInspectionModalProps> = ({
   demoMode,
   onClose,
   onStatusUpdated,
+  onEscalated,
 }) => {
   const [detail, setDetail] = useState<AlertDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<boolean>(false);
+  const [escalating, setEscalating] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"overview" | "evidence" | "events">("overview");
 
   useEffect(() => {
@@ -67,6 +72,23 @@ export const AlertInspectionModal: React.FC<AlertInspectionModalProps> = ({
       setError(err instanceof Error ? err.message : "Failed to update alert disposition");
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handleEscalate = async () => {
+    if (!currentAlert) return;
+    setEscalating(true);
+    try {
+      const inc = await escalateAlertToIncident(currentAlert.id, undefined, demoMode);
+      if (onEscalated) {
+        onEscalated(inc.id);
+      } else {
+        onClose();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to escalate alert");
+    } finally {
+      setEscalating(false);
     }
   };
 
@@ -134,6 +156,14 @@ export const AlertInspectionModal: React.FC<AlertInspectionModalProps> = ({
                 Updating...
               </span>
             )}
+            <button
+              onClick={handleEscalate}
+              disabled={escalating || currentAlert.status === "escalated"}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-teal-950/60 hover:bg-teal-900/60 border border-teal-700/60 text-teal-300 font-mono text-[11px] font-semibold transition-colors disabled:opacity-50"
+            >
+              <FolderGit2 className="w-3 h-3" />
+              {escalating ? "Escalating..." : currentAlert.status === "escalated" ? "Escalated" : "Escalate to Incident"}
+            </button>
           </div>
 
           {/* Navigation Tabs */}

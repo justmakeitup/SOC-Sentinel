@@ -7,6 +7,7 @@ import * as eventsApi from "../api/events";
 import * as sourcesApi from "../api/sources";
 import * as rulesApi from "../api/rules";
 import * as alertsApi from "../api/alerts";
+import * as incidentsApi from "../api/incidents";
 import {
   HealthResponse,
   DashboardSummary,
@@ -116,6 +117,32 @@ describe("Sentinel Complete Frontend SOC Dashboard & Ingestion", () => {
       created_at: "2026-10-27T12:00:00Z",
       updated_at: "2026-10-27T12:00:00Z",
       supporting_events: [],
+    });
+    vi.spyOn(incidentsApi, "fetchIncidentDetail").mockResolvedValue({
+      id: "inc-1",
+      incident_number: "INC-2026-0001",
+      title: "Active Data Exfiltration Investigation",
+      summary: "Unauthorized large volume outbound transfer detected.",
+      severity: "sev_1_critical",
+      status: "containment",
+      lead_analyst_name: "Alex Vance",
+      containment_details: "Firewall egress rule 882 enabled.",
+      lessons_learned: null,
+      created_at: "2026-10-27T12:00:00Z",
+      updated_at: "2026-10-27T12:30:00Z",
+      linked_event_count: 8,
+      alerts: [],
+      notes: [],
+      timeline: [
+        {
+          id: "time-1",
+          timestamp: "2026-10-27T12:00:00Z",
+          event_type: "case_created",
+          title: "Incident Declared: INC-2026-0001",
+          description: "Severity sev_1_critical case opened.",
+          actor_name: "Alex Vance",
+        },
+      ],
     });
   });
 
@@ -304,6 +331,68 @@ describe("Sentinel Complete Frontend SOC Dashboard & Ingestion", () => {
     await waitFor(() => {
       expect(screen.getByText("Triage Disposition:")).toBeInTheDocument();
       expect(screen.getByText("Detection Rationale")).toBeInTheDocument();
+    });
+  });
+
+  it("navigates to Incidents view and opens Declare Incident modal when button clicked", async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Incidents").length).toBeGreaterThan(0);
+    });
+
+    const incidentsNavButtons = screen.getAllByText("Incidents");
+    fireEvent.click(incidentsNavButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText("Declare Incident")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Declare Incident"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Declare Security Incident Case")).toBeInTheDocument();
+      expect(screen.getByText("NIST SP 800-61 Rev 2 Formal Investigation Dossier")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/Provide context regarding the attack vector/i)).toBeInTheDocument();
+    });
+  });
+
+  it("opens Incident Case Detail Dossier modal when an incident row is clicked", async () => {
+    const mockIncidentsPopulated: PaginatedResponse<IncidentItem> = {
+      items: [
+        {
+          id: "inc-1",
+          incident_number: "INC-2026-0001",
+          title: "Active Data Exfiltration Investigation",
+          summary: "Unauthorized large volume outbound transfer detected.",
+          severity: "sev_1_critical",
+          status: "containment",
+          lead_analyst_name: "Alex Vance",
+          containment_details: "Firewall egress rule 882 enabled.",
+          created_at: "2026-10-27T12:00:00Z",
+          updated_at: "2026-10-27T12:30:00Z",
+        },
+      ],
+      total_count: 1,
+      page: 1,
+      page_size: 10,
+      total_pages: 1,
+    };
+    vi.spyOn(dashboardApi, "fetchIncidents").mockResolvedValue(mockIncidentsPopulated);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Active Data Exfiltration Investigation")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Active Data Exfiltration Investigation"));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("INC-2026-0001").length).toBeGreaterThan(1);
+      expect(screen.getByText("Executive Incident Summary")).toBeInTheDocument();
+      expect(screen.getByText(/Chronological Case Activity & Audit History/i)).toBeInTheDocument();
+      expect(screen.getByText("Incident Declared: INC-2026-0001")).toBeInTheDocument();
     });
   });
 });

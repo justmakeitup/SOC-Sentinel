@@ -1,5 +1,6 @@
 """SOC compliance and regulatory audit trail logging for administrative and analyst actions."""
 
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
@@ -27,7 +28,7 @@ class AuditEvent(Base, PrimaryKeyUUIDMixin):
 
     __tablename__ = "audit_events"
 
-    actor_id: Mapped[Optional[str]] = mapped_column(
+    actor_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
