@@ -12,6 +12,7 @@ import { GenericModuleView } from "./components/views/GenericModuleView";
 import { EventsView } from "./components/views/EventsView";
 import { LogSourcesView } from "./components/views/LogSourcesView";
 import { DetectionRulesView } from "./components/views/DetectionRulesView";
+import { ReportsView } from "./components/views/ReportsView";
 import { fetchSystemHealth } from "./api/health";
 import {
   fetchDashboardSummary,
@@ -32,7 +33,6 @@ import {
   ShieldAlert,
   FolderGit2,
   AlertOctagon,
-  FileSpreadsheet,
   Settings,
   RefreshCw,
   Plus,
@@ -397,20 +397,9 @@ export const App: React.FC = () => {
 
       {/* View 7: Reports View */}
       {currentView === "reports" && (
-        <GenericModuleView
-          title="SOC Compliance & Executive Reports"
-          subtitle="Scheduled summaries, MTTR metrics, and regulatory audit exports"
-          icon={FileSpreadsheet}
-          badge="Governance"
-          description="Generate SOC 2, ISO 27001, and NIST CSF compliance reports detailing mean time to triage (MTTT), mean time to contain (MTTC), false-positive ratios, and audit logs of analyst operations."
-          architectureDetails={[
-            { label: "Audit Standard", value: "SOC 2 Type II / ISO 27001" },
-            { label: "Metrics Tracked", value: "MTTD, MTTR, False Positive Rate" },
-            { label: "Export Formats", value: "JSON, CSV, Structured PDF" },
-            { label: "Non-Repudiation", value: "audit_events immutable ledger" },
-          ]}
-          onBackToOverview={() => setCurrentView("overview")}
+        <ReportsView
           demoMode={demoMode}
+          onEnableDemo={() => setDemoMode(true)}
         />
       )}
 

@@ -8,6 +8,7 @@ import * as sourcesApi from "../api/sources";
 import * as rulesApi from "../api/rules";
 import * as alertsApi from "../api/alerts";
 import * as incidentsApi from "../api/incidents";
+import * as reportsApi from "../api/reports";
 import {
   HealthResponse,
   DashboardSummary,
@@ -17,6 +18,7 @@ import {
   NormalizedSecurityEventItem,
   LogSourceItem,
   IngestionJobItem,
+  OperationalReport,
 } from "../types";
 
 const mockHealth: HealthResponse = {
@@ -87,9 +89,58 @@ const mockJobsEmpty: PaginatedResponse<IngestionJobItem> = {
   total_pages: 1,
 };
 
+const mockReportSample: OperationalReport = {
+  start_date: "2026-10-20",
+  end_date: "2026-10-27",
+  event_category_filter: null,
+  log_source_filter: null,
+  total_events: 184520,
+  total_alerts: 42,
+  total_incidents: 6,
+  event_volume_timeseries: [
+    { timestamp: "2026-10-21", count: 24500 },
+    { timestamp: "2026-10-22", count: 26800 },
+  ],
+  alerts_by_severity: {
+    critical: 4,
+    high: 11,
+    medium: 18,
+    low: 9,
+    informational: 0,
+  },
+  alerts_by_rule: [
+    {
+      rule_code: "RULE-AUTH-001",
+      rule_name: "Repeated Failed Login Attempts",
+      severity: "medium",
+      count: 18,
+    },
+  ],
+  incidents_by_status: {
+    open: 2,
+    resolved: 1,
+    closed: 1,
+  },
+  mttr_metrics: {
+    mean_time_to_resolve_minutes: 84.5,
+    mean_time_to_resolve_hours: 1.41,
+    resolved_incidents_count: 2,
+    sample_description: "Calculated across 2 resolved/closed cases in timeframe",
+  },
+  top_source_ips: [
+    { ip: "198.51.100.45", event_count: 1420, alert_count: 14 },
+  ],
+  metric_definitions: {
+    total_events: "COUNT(*) of normalized_security_events",
+  },
+  generated_at: "2026-10-27T12:00:00Z",
+};
+
 describe("Sentinel Complete Frontend SOC Dashboard & Ingestion", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.spyOn(reportsApi, "fetchOperationalReport").mockResolvedValue(mockReportSample);
+    vi.spyOn(reportsApi, "downloadReportCsv").mockResolvedValue(undefined);
     vi.spyOn(healthApi, "fetchSystemHealth").mockResolvedValue(mockHealth);
     vi.spyOn(dashboardApi, "fetchDashboardSummary").mockResolvedValue(mockSummaryEmpty);
     vi.spyOn(dashboardApi, "fetchAlerts").mockResolvedValue(mockAlertsEmpty);
@@ -393,6 +444,50 @@ describe("Sentinel Complete Frontend SOC Dashboard & Ingestion", () => {
       expect(screen.getByText("Executive Incident Summary")).toBeInTheDocument();
       expect(screen.getByText(/Chronological Case Activity & Audit History/i)).toBeInTheDocument();
       expect(screen.getByText("Incident Declared: INC-2026-0001")).toBeInTheDocument();
+    });
+  });
+
+  it("navigates to Reports view, displays telemetry metrics, and toggles calculation rules", async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Reports").length).toBeGreaterThan(0);
+    });
+
+    const reportsNavButtons = screen.getAllByText("Reports");
+    fireEvent.click(reportsNavButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText("Operational Reports & Analytics")).toBeInTheDocument();
+      expect(screen.getByText("Events Processed")).toBeInTheDocument();
+      expect(screen.getByText("184,520")).toBeInTheDocument();
+      expect(screen.getByText("Mean Time to Resolution")).toBeInTheDocument();
+      expect(screen.getByText("1.4")).toBeInTheDocument();
+      expect(screen.getByText("Detection Rule Attribution")).toBeInTheDocument();
+      expect(screen.getByText("RULE-AUTH-001")).toBeInTheDocument();
+      expect(screen.getByText("Top Source IPs (Observed Threats)")).toBeInTheDocument();
+      expect(screen.getByText("198.51.100.45")).toBeInTheDocument();
+    });
+
+    // Test toggle of Methodology Panel
+    expect(screen.queryByText(/CWE-1236 Formula Injection Defense/i)).not.toBeInTheDocument();
+    const rulesBtn = screen.getByText("Calculation Rules");
+    fireEvent.click(rulesBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/CWE-1236 Formula Injection Defense/i)).toBeInTheDocument();
+    });
+
+    // Test Export trigger
+    const exportSummaryBtn = screen.getByText("Summary");
+    fireEvent.click(exportSummaryBtn);
+
+    await waitFor(() => {
+      expect(reportsApi.downloadReportCsv).toHaveBeenCalledWith(
+        "summary",
+        expect.any(Object),
+        false
+      );
     });
   });
 });

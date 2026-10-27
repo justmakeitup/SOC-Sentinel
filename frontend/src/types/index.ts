@@ -311,6 +311,51 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
+export interface RuleAlertCount {
+  rule_code: string;
+  rule_name: string;
+  severity: string;
+  count: number;
+}
+
+export interface MTTRMetric {
+  mean_time_to_resolve_minutes: number | null;
+  mean_time_to_resolve_hours: number | null;
+  resolved_incidents_count: number;
+  sample_description: string;
+}
+
+export interface TopAttackerIP {
+  ip: string;
+  event_count: number;
+  alert_count: number;
+}
+
+export interface OperationalReport {
+  start_date: string;
+  end_date: string;
+  event_category_filter?: string | null;
+  log_source_filter?: string | null;
+  total_events: number;
+  total_alerts: number;
+  total_incidents: number;
+  event_volume_timeseries: TimeSeriesPoint[];
+  alerts_by_severity: Record<string, number>;
+  alerts_by_rule: RuleAlertCount[];
+  incidents_by_status: Record<string, number>;
+  mttr_metrics: MTTRMetric;
+  top_source_ips: TopAttackerIP[];
+  metric_definitions: Record<string, string>;
+  generated_at: string;
+}
+
+export interface ReportFilterParams {
+  startDate?: string;
+  endDate?: string;
+  eventCategory?: string;
+  logSourceId?: string;
+}
+
 export type NavView =
   | "overview"
   | "events"

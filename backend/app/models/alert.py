@@ -120,3 +120,13 @@ class SecurityAlert(Base, PrimaryKeyUUIDMixin, TimestampMixin):
 
     def __repr__(self) -> str:
         return f"<SecurityAlert {self.id} title='{self.title}' status={self.status} sev={self.severity}>"
+
+    @property
+    def source_ip(self) -> Optional[str]:
+        """Convenience accessor for primary affected source IP from evidence context."""
+        if not self.context_data:
+            return None
+        return (
+            self.context_data.get("source_ip")
+            or self.context_data.get("affected_entities", {}).get("source_ip")
+        )

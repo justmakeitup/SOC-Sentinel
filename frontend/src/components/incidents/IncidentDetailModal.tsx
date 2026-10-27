@@ -12,6 +12,7 @@ import {
 } from "../../api/incidents";
 import { SeverityBadge } from "../common/SeverityBadge";
 import { StatusBadge } from "../common/StatusBadge";
+import { downloadIncidentDossier } from "../../api/reports";
 import {
   FolderGit2,
   X,
@@ -22,6 +23,7 @@ import {
   Lock,
   History,
   CheckCircle2,
+  Download,
 } from "lucide-react";
 
 interface IncidentDetailModalProps {
@@ -58,6 +60,18 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
 
   // Status Change Confirmation Dialog
   const [pendingStatus, setPendingStatus] = useState<IncidentStatus | null>(null);
+  const [exportingDossier, setExportingDossier] = useState<boolean>(false);
+
+  const handleExportDossier = async () => {
+    setExportingDossier(true);
+    try {
+      await downloadIncidentDossier(current.id, demoMode);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export incident dossier");
+    } finally {
+      setExportingDossier(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -187,12 +201,23 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
               </h2>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-[#1A2332] transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportDossier}
+              disabled={exportingDossier}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-mono text-xs transition-colors disabled:opacity-50"
+              title="Download complete incident markdown forensic dossier"
+            >
+              <Download className={`w-3.5 h-3.5 text-cyan-400 ${exportingDossier ? "animate-bounce" : ""}`} />
+              <span>{exportingDossier ? "Exporting..." : "Export Dossier"}</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-[#1A2332] transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Action Controls & Navigation Tabs */}

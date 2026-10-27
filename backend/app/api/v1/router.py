@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     health,
     incidents,
     ingestion,
+    reports,
     rules,
     sources,
 )
@@ -26,3 +27,4 @@ api_v1_router.include_router(ingestion.router)
 api_v1_router.include_router(events.router)
 api_v1_router.include_router(sources.router)
 api_v1_router.include_router(rules.router)
+api_v1_router.include_router(reports.router)
