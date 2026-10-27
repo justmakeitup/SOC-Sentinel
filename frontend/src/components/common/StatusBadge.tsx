@@ -1,7 +1,7 @@
 import React from "react";
 
 interface StatusBadgeProps {
-  status: "healthy" | "connected" | "degraded" | "disconnected" | "error" | "operational";
+  status: "healthy" | "connected" | "degraded" | "disconnected" | "error" | "operational" | "critical";
   label?: string;
   size?: "sm" | "md";
 }
