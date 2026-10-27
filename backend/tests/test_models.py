@@ -4,6 +4,9 @@ import uuid
 from datetime import datetime, timezone
 
 import pytest
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
 from app.models.alert import AlertStatus, SecurityAlert
 from app.models.audit import AuditEvent
 from app.models.event import EventSeverity, NormalizedSecurityEvent
@@ -21,8 +24,6 @@ from app.models.log_source import (
 )
 from app.models.rule import DetectionRule, RuleSeverity, RuleType
 from app.models.user import User, UserRole, UserStatus
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
 
 
 def test_user_creation(db_session: Session):

@@ -1,6 +1,7 @@
 """Ingestion pipeline service orchestrating parsing, validation, and storage."""
 
 import hashlib
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -10,6 +11,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.engine.correlator import default_engine
 from app.ingestion.normalizer import EventNormalizer
 from app.ingestion.parsers import (
     AuthLogParser,
@@ -27,6 +29,8 @@ from app.models.log_source import (
     LogSourceStatus,
     LogSourceType,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class IngestionService:
@@ -300,6 +304,14 @@ class IngestionService:
 
         self.db.commit()
         self.db.refresh(job)
+
+        # 11. Evaluate newly ingested events against detection rules
+        if new_event_models:
+            try:
+                default_engine.evaluate_events(new_event_models, self.db)
+            except Exception as eval_err:
+                # Detection evaluation errors must never fail the ingestion batch
+                logger.exception("Detection evaluation failed during ingestion job %s: %s", job.id, eval_err)
 
         msg_parts = [f"Imported {processed_count} new events successfully."]
         if duplicate_count > 0:

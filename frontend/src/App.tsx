@@ -5,9 +5,11 @@ import { EventVolumeChart } from "./components/dashboard/EventVolumeChart";
 import { SeverityDistributionChart } from "./components/dashboard/SeverityDistributionChart";
 import { AlertsTable } from "./components/dashboard/AlertsTable";
 import { IncidentActivityPanel } from "./components/dashboard/IncidentActivityPanel";
+import { AlertInspectionModal } from "./components/dashboard/AlertInspectionModal";
 import { GenericModuleView } from "./components/views/GenericModuleView";
 import { EventsView } from "./components/views/EventsView";
 import { LogSourcesView } from "./components/views/LogSourcesView";
+import { DetectionRulesView } from "./components/views/DetectionRulesView";
 import { fetchSystemHealth } from "./api/health";
 import {
   fetchDashboardSummary,
@@ -28,7 +30,6 @@ import {
   ShieldAlert,
   FolderGit2,
   AlertOctagon,
-  FileCode,
   FileSpreadsheet,
   Settings,
   RefreshCw,
@@ -373,20 +374,13 @@ export const App: React.FC = () => {
 
       {/* View 6: Detection Rules View */}
       {currentView === "rules" && (
-        <GenericModuleView
-          title="Detection Engineering"
-          subtitle="MITRE ATT&CK mapped correlation rules and sliding threshold evaluations"
-          icon={FileCode}
-          badge="Detection Engine"
-          description="Author, tune, and test detection rules against streaming and batch event telemetry. Supports threshold counts, sliding time windows, and correlation criteria with runbook remediation guidance for Tier-1 analysts."
-          architectureDetails={[
-            { label: "Framework", value: "MITRE Enterprise ATT&CK" },
-            { label: "Execution Models", value: "Threshold, SQL Match, Behavioral" },
-            { label: "Storm Protection", value: "deduplication_key hourly buckets" },
-            { label: "Change Control", value: "Versioned rule tracking with audit logs" },
-          ]}
-          onBackToOverview={() => setCurrentView("overview")}
+        <DetectionRulesView
           demoMode={demoMode}
+          onEnableDemo={() => setDemoMode(true)}
+          onAlertsTriggered={() => {
+            loadAlerts();
+            loadSummary();
+          }}
         />
       )}
 
@@ -428,46 +422,17 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Alert Triage Quick Drawer/Modal */}
+      {/* Alert Triage Inspection & Forensic Evidence Modal */}
       {selectedAlert && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121820] border border-[#1E293B] rounded-lg max-w-lg w-full p-5 space-y-4 font-mono">
-            <div className="flex items-center justify-between border-b border-[#1E293B] pb-3">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-teal-400" />
-                <span className="text-xs font-bold text-slate-100 uppercase">
-                  Alert Triage Detail
-                </span>
-              </div>
-              <button
-                onClick={() => setSelectedAlert(null)}
-                className="text-xs text-slate-400 hover:text-slate-200"
-              >
-                [Close]
-              </button>
-            </div>
-            <div className="space-y-2 text-xs">
-              <div className="text-sm font-semibold text-slate-200">{selectedAlert.title}</div>
-              <p className="text-slate-400 text-[11px] leading-relaxed">
-                {selectedAlert.description}
-              </p>
-              <div className="pt-2 border-t border-[#1E293B] space-y-1 text-[11px] text-slate-300">
-                <div>RULE: <span className="text-teal-400">{selectedAlert.rule_code}</span></div>
-                <div>SOURCE ENTITY: <span className="text-slate-200">{selectedAlert.source_ip || "N/A"}</span></div>
-                <div>DEDUP KEY: <span className="text-slate-400 text-[10px] break-all">{selectedAlert.deduplication_key}</span></div>
-                <div>EVENT COUNT: <span className="text-teal-300 font-bold">{selectedAlert.event_count}</span></div>
-              </div>
-            </div>
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setSelectedAlert(null)}
-                className="px-3 py-1.5 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-              >
-                Dismiss Triage
-              </button>
-            </div>
-          </div>
-        </div>
+        <AlertInspectionModal
+          alert={selectedAlert}
+          demoMode={demoMode}
+          onClose={() => setSelectedAlert(null)}
+          onStatusUpdated={() => {
+            loadAlerts();
+            loadSummary();
+          }}
+        />
       )}
 
       {/* Incident Case Detail Modal */}

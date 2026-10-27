@@ -5,6 +5,8 @@ import * as healthApi from "../api/health";
 import * as dashboardApi from "../api/dashboard";
 import * as eventsApi from "../api/events";
 import * as sourcesApi from "../api/sources";
+import * as rulesApi from "../api/rules";
+import * as alertsApi from "../api/alerts";
 import {
   HealthResponse,
   DashboardSummary,
@@ -94,6 +96,27 @@ describe("Sentinel Complete Frontend SOC Dashboard & Ingestion", () => {
     vi.spyOn(eventsApi, "fetchEvents").mockResolvedValue(mockEventsEmpty);
     vi.spyOn(sourcesApi, "fetchLogSources").mockResolvedValue(mockSourcesEmpty);
     vi.spyOn(sourcesApi, "fetchIngestionJobs").mockResolvedValue(mockJobsEmpty);
+    vi.spyOn(rulesApi, "fetchDetectionRules").mockResolvedValue(rulesApi.DEMO_RULES);
+    vi.spyOn(alertsApi, "fetchAlertDetail").mockResolvedValue({
+      id: "alert-1",
+      rule_id: "rule-1",
+      rule_code: "SEC-AUTH-001",
+      rule_name: "Repeated Failed Authentication Attempts",
+      title: "Excessive Failed Logins: admin",
+      description: "Observed 5 failed authentication attempts within 300s window.",
+      severity: "high",
+      status: "new",
+      deduplication_key: "SEC-AUTH-001:admin:2026102712",
+      event_count: 5,
+      source_ip: "192.168.1.100",
+      context_data: {
+        evidence: { failed_attempts: 5 },
+        affected_entities: { user_name: "admin", source_ip: "192.168.1.100" },
+      },
+      created_at: "2026-10-27T12:00:00Z",
+      updated_at: "2026-10-27T12:00:00Z",
+      supporting_events: [],
+    });
   });
 
   it("renders the SOC dashboard shell with all 4 summary KPI cards in empty state", async () => {
@@ -222,6 +245,65 @@ describe("Sentinel Complete Frontend SOC Dashboard & Ingestion", () => {
       expect(screen.getByText("Log Sources & Ingestion Pipeline")).toBeInTheDocument();
       expect(screen.getByText("Register Sensor")).toBeInTheDocument();
       expect(screen.getByText(/Ingestion Job History & Quarantine Audit/i)).toBeInTheDocument();
+    });
+  });
+
+  it("navigates to Detection Rules view and renders the rule catalog with MITRE mapping", async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Detection Rules").length).toBeGreaterThan(0);
+    });
+
+    const rulesButtons = screen.getAllByText("Detection Rules");
+    fireEvent.click(rulesButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText("Detection Rules Catalog")).toBeInTheDocument();
+      expect(screen.getByText(/MITRE ATT&CK Mapped/i)).toBeInTheDocument();
+      expect(screen.getByText("SEC-AUTH-001")).toBeInTheDocument();
+      expect(screen.getByText("Evaluate Recent Telemetry")).toBeInTheDocument();
+    });
+  });
+
+  it("opens alert triage inspection modal when selecting an alert from queue", async () => {
+    const mockAlertsPopulated: PaginatedResponse<AlertItem> = {
+      items: [
+        {
+          id: "alert-1",
+          rule_id: "rule-1",
+          rule_code: "SEC-AUTH-001",
+          rule_name: "Repeated Failed Authentication Attempts",
+          title: "Excessive Failed Logins: admin",
+          description: "Observed 5 failed authentication attempts within 300s window.",
+          severity: "high",
+          status: "new",
+          source_ip: "192.168.1.100",
+          deduplication_key: "SEC-AUTH-001:admin:2026102712",
+          event_count: 5,
+          created_at: "2026-10-27T12:00:00Z",
+          updated_at: "2026-10-27T12:00:00Z",
+        },
+      ],
+      total_count: 1,
+      page: 1,
+      page_size: 10,
+      total_pages: 1,
+    };
+    vi.spyOn(dashboardApi, "fetchAlerts").mockResolvedValue(mockAlertsPopulated);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Excessive Failed Logins: admin")).toBeInTheDocument();
+    });
+
+    // Click on alert row to open triage modal
+    fireEvent.click(screen.getByText("Excessive Failed Logins: admin"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Triage Disposition:")).toBeInTheDocument();
+      expect(screen.getByText("Detection Rationale")).toBeInTheDocument();
     });
   });
 });

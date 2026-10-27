@@ -202,6 +202,50 @@ export interface IngestionUploadResponse {
   rejected_summary?: RejectedRecordItem[] | null;
 }
 
+export interface SupportingEventSummary {
+  id: string;
+  timestamp: string;
+  event_type: string;
+  event_action: string;
+  severity: string;
+  source_ip?: string | null;
+  destination_ip?: string | null;
+  destination_port?: number | null;
+  user_name?: string | null;
+}
+
+export interface AlertDetail extends AlertItem {
+  supporting_events: SupportingEventSummary[];
+}
+
+export interface DetectionRuleDetail {
+  id: string;
+  rule_code: string;
+  name: string;
+  description: string;
+  severity: RuleSeverity;
+  rule_type: string;
+  is_active: boolean;
+  time_window_seconds: number;
+  threshold_count: number;
+  mitre_tactic?: string | null;
+  mitre_technique?: string | null;
+  remediation_guidance?: string | null;
+  assumptions: string[];
+  limitations: string[];
+  expected_false_positives: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReplayResponse {
+  start_time: string;
+  end_time: string;
+  events_evaluated: number;
+  alerts_generated_or_updated: number;
+  errors: Array<{ rule_code: string; error: string; timestamp: string }>;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total_count: number;

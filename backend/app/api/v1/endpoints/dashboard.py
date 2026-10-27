@@ -2,15 +2,16 @@
 
 from datetime import datetime, timezone
 
+from fastapi import APIRouter, Depends, status
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
 from app.database import get_db
 from app.models.alert import AlertStatus, SecurityAlert
 from app.models.event import NormalizedSecurityEvent
 from app.models.incident import Incident, IncidentStatus
 from app.models.rule import RuleSeverity
 from app.schemas.dashboard import DashboardSummaryResponse, TimeSeriesPoint
-from fastapi import APIRouter, Depends, status
-from sqlalchemy import func
-from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/dashboard", tags=["SOC Dashboard"])
 

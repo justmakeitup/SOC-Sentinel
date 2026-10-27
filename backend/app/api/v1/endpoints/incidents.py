@@ -2,13 +2,14 @@
 
 from typing import Optional
 
+from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import func
+from sqlalchemy.orm import Session, joinedload
+
 from app.database import get_db
 from app.models.incident import Incident, IncidentSeverity, IncidentStatus
 from app.schemas.common import PaginatedResponse
 from app.schemas.incident import IncidentRead
-from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
 

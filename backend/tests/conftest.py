@@ -3,13 +3,14 @@
 from typing import Generator
 
 import pytest
-from app.database import get_db
-from app.main import app
-from app.models.base import Base
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
+
+from app.database import get_db
+from app.main import app
+from app.models.base import Base
 
 # Use in-memory SQLite with StaticPool for fast, isolated unit test execution
 TEST_DATABASE_URL = "sqlite:///:memory:"

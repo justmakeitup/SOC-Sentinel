@@ -240,7 +240,8 @@ export const AlertsTable: React.FC<AlertsTableProps> = ({
               {alerts.map((alert) => (
                 <tr
                   key={alert.id}
-                  className="hover:bg-slate-900/40 transition-colors group"
+                  onClick={() => onSelectAlert?.(alert)}
+                  className="hover:bg-slate-900/60 transition-colors group cursor-pointer"
                 >
                   <td className="py-2.5 px-4 text-slate-400 whitespace-nowrap text-[11px]">
                     {formatTimestamp(alert.created_at)}

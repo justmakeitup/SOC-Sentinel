@@ -2,10 +2,11 @@
 
 from datetime import datetime, timezone
 
+from fastapi import APIRouter, status
+
 from app.config import settings
 from app.database import check_db_connection
 from app.schemas.common import HealthResponse, SubsystemHealth
-from fastapi import APIRouter, status
 
 router = APIRouter(prefix="/health", tags=["System Health"])
 
