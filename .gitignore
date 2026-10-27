@@ -1,0 +1,66 @@
+# ==========================================
+# Root .gitignore for SOC Sentinel
+# ==========================================
+
+# Secrets and Environment Variables
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+*.secrets
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+backend/.venv/
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+.eggs/
+dist/
+build/
+*.whl
+
+# Testing & Coverage (Python)
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Node & Frontend
+frontend/node_modules/
+node_modules/
+frontend/dist/
+frontend/build/
+.npm
+*.tsbuildinfo
+
+# Testing & Coverage (Frontend)
+frontend/coverage/
+
+# Database files (local dev / SQLite fallbacks)
+*.sqlite
+*.sqlite3
+*.db
+backend/*.db
+backend/*.sqlite3
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
