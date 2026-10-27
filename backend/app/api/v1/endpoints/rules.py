@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import require_roles
 from app.database import get_db
 from app.engine.correlator import default_engine
 from app.engine.schemas import (
@@ -16,6 +17,7 @@ from app.engine.schemas import (
 )
 from app.models.event import NormalizedSecurityEvent
 from app.models.rule import DetectionRule
+from app.models.user import User, UserRole
 from app.schemas.alert import SecurityAlertRead
 
 router = APIRouter(prefix="/rules", tags=["Detection Rules"])
@@ -124,6 +126,13 @@ def update_detection_rule(
     rule_identifier: str,
     update_data: DetectionRuleUpdateRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles([
+            UserRole.DETECTION_ENGINEER,
+            UserRole.SOC_MANAGER,
+            UserRole.ADMIN,
+        ])
+    ),
 ) -> DetectionRuleDetailResponse:
     """Updates tunable thresholds or toggles rule activation."""
     default_engine.sync_rules(db)
@@ -195,6 +204,13 @@ def evaluate_recent_events(
 def replay_events(
     request: ReplayRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles([
+            UserRole.DETECTION_ENGINEER,
+            UserRole.SOC_MANAGER,
+            UserRole.ADMIN,
+        ])
+    ),
 ) -> ReplayResponse:
     """Replays events within specified time range to reproduce findings and verify rule tuning."""
     if request.end_time <= request.start_time:

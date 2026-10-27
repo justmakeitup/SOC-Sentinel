@@ -6,10 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import require_roles
 from app.database import get_db
 from app.ingestion.schemas import LogSourceCreateRequest, LogSourceResponse
 from app.models.event import NormalizedSecurityEvent
 from app.models.log_source import IngestionJob, LogSource
+from app.models.user import User, UserRole
 from app.schemas.common import PaginatedResponse
 
 router = APIRouter(prefix="/sources", tags=["Log Sources"])
@@ -87,6 +89,9 @@ def list_sources(
 def create_source(
     payload: LogSourceCreateRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles([UserRole.DETECTION_ENGINEER, UserRole.ADMIN])
+    ),
 ) -> LogSourceResponse:
     """Registers a new sensor forwarder."""
     existing = db.query(LogSource).filter(LogSource.name == payload.name).first()

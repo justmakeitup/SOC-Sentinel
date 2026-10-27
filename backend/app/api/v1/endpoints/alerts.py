@@ -20,6 +20,7 @@ from app.schemas.alert import SecurityAlertRead
 from app.schemas.common import PaginatedResponse
 from app.schemas.incident import IncidentCreate, IncidentDetailResponse
 from app.services import incident_service
+from app.services.audit_service import record_audit_event
 
 router = APIRouter(prefix="/alerts", tags=["Security Alerts"])
 
@@ -216,6 +217,7 @@ def update_alert_status(
     alert_id: UUID,
     status_update: AlertStatusUpdateRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> AlertDetailResponse:
     """Updates the lifecycle status of an alert (e.g. triaged, investigating, closed)."""
     alert = (
@@ -230,9 +232,21 @@ def update_alert_status(
             detail=f"Security alert '{alert_id}' not found.",
         )
 
+    old_status = alert.status.value
     alert.status = status_update.status
     db.commit()
     db.refresh(alert)
+
+    record_audit_event(
+        db,
+        action="alert_status_updated",
+        entity_type="alert",
+        entity_id=str(alert.id),
+        actor_id=current_user.id,
+        actor_name=current_user.username,
+        actor_ip=None,
+        details={"old_status": old_status, "new_status": status_update.status.value},
+    )
 
     return get_alert_detail(alert_id=alert_id, db=db)
 

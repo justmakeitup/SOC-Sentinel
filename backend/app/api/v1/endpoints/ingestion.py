@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import require_roles
 from app.database import get_db
 from app.ingestion.schemas import (
     IngestionJobResponse,
@@ -16,6 +17,7 @@ from app.ingestion.schemas import (
 )
 from app.ingestion.service import IngestionService
 from app.models.log_source import IngestionJob
+from app.models.user import User, UserRole
 from app.schemas.common import PaginatedResponse
 
 router = APIRouter(prefix="/ingestion", tags=["Log Ingestion"])
@@ -33,6 +35,15 @@ async def upload_log_file(
     parser_type: str = Form(default="auto", description="auto | auth | firewall | generic_json | csv"),
     field_mapping_json: Optional[str] = Form(default=None, description="Optional JSON string of column mappings"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles([
+            UserRole.ANALYST_TIER_2,
+            UserRole.INCIDENT_RESPONDER,
+            UserRole.DETECTION_ENGINEER,
+            UserRole.SOC_MANAGER,
+            UserRole.ADMIN,
+        ])
+    ),
 ) -> IngestionUploadResponse:
     """Imports, normalizes, validates, and persists telemetry logs.
 
