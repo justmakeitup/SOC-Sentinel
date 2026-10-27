@@ -15,7 +15,17 @@ from app.config import settings
 logger = logging.getLogger("sentinel.database")
 
 # Build engine arguments depending on dialect (PostgreSQL vs SQLite for unit testing)
-is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+db_url = settings.DATABASE_URL
+if db_url.startswith("sqlite:///") and not db_url.startswith("sqlite:///:memory:"):
+    from pathlib import Path
+    raw_path = db_url.replace("sqlite:///", "")
+    p = Path(raw_path)
+    if not p.is_absolute():
+        backend_dir = Path(__file__).resolve().parent.parent
+        resolved = (backend_dir / p).resolve()
+        db_url = f"sqlite:///{resolved.as_posix()}"
+
+is_sqlite = db_url.startswith("sqlite")
 connect_args = {"check_same_thread": False} if is_sqlite else {}
 pool_kwargs = {} if is_sqlite else {
     "pool_size": 10,
@@ -24,7 +34,7 @@ pool_kwargs = {} if is_sqlite else {
 }
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    db_url,
     connect_args=connect_args,
     **pool_kwargs,
 )

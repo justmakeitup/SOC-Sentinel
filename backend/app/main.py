@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.v1.router import api_v1_router
@@ -127,6 +128,24 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "status_code": 422,
             "detail": "Request payload validation failed.",
             "errors": formatted_errors,
+        },
+    )
+
+
+@app.exception_handler(OperationalError)
+async def db_operational_exception_handler(request: Request, exc: OperationalError):
+    """Gracefully handles database disconnections or unreachability without crashing ASGI pipeline."""
+    logger.error(
+        "Database connectivity failure on path %s: %s",
+        request.url.path,
+        str(exc).split("\n")[0],
+    )
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={
+            "error": True,
+            "status_code": 503,
+            "detail": "Database service is currently unreachable. Ensure PostgreSQL is active on port 5432, or configure an active DATABASE_URL in backend/.env.",
         },
     )
 
