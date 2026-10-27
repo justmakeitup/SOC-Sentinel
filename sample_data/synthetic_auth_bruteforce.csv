@@ -1,0 +1,16 @@
+timestamp,username,source_ip,destination_ip,event_action,status_code,protocol
+2026-10-27T20:10:01Z,svc_finance,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:10:14Z,svc_finance,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:10:28Z,svc_finance,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:10:42Z,svc_finance,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:10:55Z,svc_finance,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:11:10Z,svc_finance,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:11:25Z,admin,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:11:40Z,admin,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:11:55Z,admin,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:12:10Z,admin,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:12:25Z,admin,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:12:40Z,admin,198.51.100.45,10.0.1.10,login_failed,0xC000006A,TCP
+2026-10-27T20:13:00Z,admin,198.51.100.45,10.0.1.10,login_success,0x0,TCP
+2026-10-27T20:15:00Z,jdoe,10.0.1.105,10.0.1.10,login_success,0x0,TCP
+2026-10-27T20:16:30Z,mchen,10.0.1.112,10.0.1.10,login_success,0x0,TCP

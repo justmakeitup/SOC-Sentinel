@@ -448,6 +448,43 @@ All endpoints are prefixed with `/api/v1`. Interactive Swagger documentation is 
 
 ---
 
+## Dashboard Layout & Visual Workflow
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ SENTINEL SOC  [Search telemetry, rules (Ctrl+K)...]  UTC 18:24  [Demo: OFF] [API Live] │
+├───────────────┬────────────────────────────────────────────────────────────────────────┤
+│ OVERVIEW      │  [Events: 184,520]  [Alerts: 42]  [Open Incidents: 6]  [MTTR: 1.4h]    │
+│ Events        ├────────────────────────────────────────────────────────────────────────┤
+│ Alerts        │  Daily Telemetry Volume Trend (UTC)          Alert Severity Profile    │
+│ Incidents     │   ▲ 35k ┼──────/\────────                      Critical  [████    ] 10%│
+│ Log Sources   │     20k ┼─/\──/  \──/\───                      High      [████████] 26%│
+│ Rules         │       0 ┴────────────────                      Medium    [████████] 43%│
+│ Reports       ├────────────────────────────────────────────────────────────────────────┤
+│ Settings      │  Active Alerts Queue                     Incident Response Activity    │
+│               │  • [CRIT] Credential Stuffing (admin)    • INC-2026-0001 (Containment) │
+│               │  • [HIGH] Multi-Port Recon (10.0.1.55)   • INC-2026-0002 (Resolved)    │
+└───────────────┴────────────────────────────────────────────────────────────────────────┘
+```
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ INCIDENT DOSSIER: INC-2026-0001 (SEV-1 Critical | Containment)    [Export Dossier] [X] │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ Title: Suspected Credential Stuffing & Post-Auth Lateral Movement                      │
+│ Lead Analyst: Alex Vance (Incident Responder) | SLA: Active Egress Quarantine          │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ [Chronological Timeline]  [Chained Alerts (2)]  [Forensic Evidence]  [Add Note]        │
+│                                                                                        │
+│ 14:10:02 UTC - Initial Brute-Force Observed (14 failed logins from 198.51.100.45)      │
+│ 14:14:18 UTC - Anomalous Kerberos Logon (admin account compromised from untrusted IP) │
+│ 14:18:00 UTC - Analyst Vance invoked Active Directory session revocation script       │
+│ 14:22:45 UTC - Ingress block rule deployed on border edge firewall gateway             │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## End-to-End Analyst Workflow
 
 Below is the standard analyst workflow supported by Sentinel:
@@ -457,7 +494,7 @@ Below is the standard analyst workflow supported by Sentinel:
 ```
 
 1. **Ingest Telemetry:**
-   - Navigate to **Log Sources** or **Events**, click **Import Logs**, and upload a synthetic authentication or network log file (`.csv` or `.json`).
+   - Navigate to **Log Sources** or **Events**, click **Import Logs**, and upload a synthetic authentication or network log file from [`sample_data/`](sample_data/) (`synthetic_auth_bruteforce.csv` or `synthetic_firewall_probes.json`).
    - The ingestion pipeline scrubs credentials, validates schema, calculates SHA-256 deduplication hashes, and records ingestion metrics.
 2. **Detection Evaluation:**
    - The correlation engine evaluates the newly ingested events against active detection rules (e.g. repeated failed logins or port sweeps).
