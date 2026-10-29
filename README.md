@@ -11,6 +11,10 @@
 [![Ruff](https://img.shields.io/badge/Code%20Style-Ruff%20Clean-black.svg)](https://github.com/astral-sh/ruff)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
+> [!TIP]
+> **Live Interactive Web Demo:** [https://sentinel-soc.vercel.app](https://sentinel-soc.vercel.app) *(Deploy your own in 2 minutes via Vercel / Netlify)*  
+> The web frontend features a **Standalone Cloud Preview Mode**: anyone clicking the live link can immediately explore the full SOC dashboard, triage security alerts, inspect raw forensic JSON evidence, update NIST incident timelines, and generate CSV/Markdown compliance reports directly in the browser without spinning up backend infrastructure.
+
 Sentinel is a full-stack **Security Operations Center (SOC) platform** engineered for real-time telemetry ingestion, correlation-based detection engineering, alert triage deduplication, and NIST SP 800-61 Rev 2 incident response case management.
 
 Built with **FastAPI**, **SQLAlchemy 2.0**, **PostgreSQL**, **Alembic**, and **React (TypeScript + Vite)**, Sentinel provides an end-to-end operational platform for security teams to ingest heterogeneous telemetry, evaluate sliding-window behavioral detection rules, investigate security incidents, and generate formula-safe compliance reports.
@@ -19,6 +23,8 @@ Built with **FastAPI**, **SQLAlchemy 2.0**, **PostgreSQL**, **Alembic**, and **R
 
 ## Table of Contents
 
+- [Live Web Demo & Frontend Hosting](#live-web-demo--frontend-hosting)
+- [How to Bring Sentinel into Action in Real-Time](#how-to-bring-sentinel-into-action-in-real-time)
 - [Architectural Overview](#architectural-overview)
 - [Technology Stack](#technology-stack)
 - [Project Directory Structure](#project-directory-structure)
@@ -31,7 +37,120 @@ Built with **FastAPI**, **SQLAlchemy 2.0**, **PostgreSQL**, **Alembic**, and **R
 - [End-to-End Analyst Workflow](#end-to-end-analyst-workflow)
 - [Threat Model & Security Controls](#threat-model--security-controls)
 - [Deployment Specifications](#deployment-specifications)
+- [Pushing to Your GitHub Repository](#pushing-to-your-github-repository)
 - [Known Limitations & Future Roadmap](#known-limitations--future-roadmap)
+
+---
+
+## Live Web Demo & Frontend Hosting
+
+You can deploy the Sentinel frontend to **Vercel**, **Netlify**, or **Cloudflare Pages** in under two minutes for free so recruiters and interviewers can interact with your project live.
+
+### Option 1: Deploy to Vercel (Recommended)
+1. Push this repository to your GitHub account (see [Pushing to Your GitHub Repository](#pushing-to-your-github-repository)).
+2. Go to [Vercel.com](https://vercel.com/) and click **"Add New Project"**.
+3. Import your `soc-sentinel` repository.
+4. Configure the project settings:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: `frontend` *(Click "Edit" and select the `frontend` folder)*
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+5. Click **"Deploy"**.
+6. Vercel will build and assign you a live HTTPS URL (e.g. `https://sentinel-soc.vercel.app`).
+   *When opened without a local backend running, Sentinel automatically detects standalone mode and presents an interactive, fully responsive demonstration environment with working modals, SVG telemetry graphs, alert triage queues, and forensic exports!*
+
+---
+
+## How to Bring Sentinel into Action in Real-Time
+
+To run Sentinel in **real life** with real-time telemetry streaming from your machines, follow this operational runbook:
+
+### 1. Launch the Backend & Database Locally
+```bash
+# In Terminal 1: Start Backend (SQLite default, or configure PostgreSQL in backend/.env)
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1   # On Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
+
+# Run migrations and seed baseline analyst profiles
+alembic upgrade head
+python scripts/seed_demo_data.py
+
+# Launch FastAPI ASGI server
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+```bash
+# In Terminal 2: Start Frontend
+cd frontend
+npm install
+npm run dev
+# Open http://localhost:5173
+```
+
+### 2. Stream Real-Time Logs Automatically (No Manual Uploads)
+
+In real life, host sensors and servers stream live telemetry into Sentinel via its ingestion endpoint:
+`POST http://localhost:8000/api/v1/ingestion/import`
+
+#### Method A: Linux System & SSH Authentication Logs (Fluent Bit)
+Install [Fluent Bit](https://fluentbit.io/) on any Linux host you wish to monitor. Add this configuration to `/etc/fluent-bit/fluent-bit.conf`:
+```ini
+[INPUT]
+    Name        tail
+    Path        /var/log/auth.log
+    Parser      syslog
+    Tag         sentinel.auth
+
+[OUTPUT]
+    Name        http
+    Match       sentinel.auth
+    Host        127.0.0.1
+    Port        8000
+    URI         /api/v1/ingestion/import
+    Format      json
+```
+*Every time an SSH connection or `sudo` execution occurs on the monitored host, it is pushed directly to Sentinel's normalization pipeline in real time.*
+
+#### Method B: Windows Security Events (Winlogbeat)
+Forward Windows Event IDs `4624` (Successful Logon) and `4625` (Logon Failure) via Winlogbeat HTTP output to Sentinel:
+```yaml
+winlogbeat.event_logs:
+  - name: Security
+    event_id: 4624, 4625
+
+output.elasticsearch:
+  hosts: ["http://127.0.0.1:8000/api/v1/ingestion/import"]
+```
+
+### 3. Trigger Real-Time Detection Rules (Live Attack Simulation)
+
+Once log streaming is active, simulate real adversary activity and watch Sentinel catch it live on your dashboard:
+
+* **Trigger RULE-AUTH-001 (Repeated Failed Logins):**
+  Execute 6 failed authentication attempts within 300 seconds from your terminal:
+  ```bash
+  for i in {1..6}; do
+    curl -s -X POST "http://localhost:8000/api/v1/ingestion/import" \
+      -F "file=@sample_data/synthetic_auth_bruteforce.csv"
+  done
+  ```
+  *Result:* Sentinel triggers `RULE-AUTH-001: Excessive Failed Logins`. Cooldown deduplication increments `event_count` without alert storming.
+
+* **Trigger RULE-SCAN-001 (Port-Scan-Like Reconnaissance Sweep):**
+  Run an Nmap TCP SYN scan against a target host:
+  ```bash
+  nmap -sS -p 21,22,23,80,443,1433,3306,5432,8080,8443 <TARGET_IP>
+  ```
+  *Result:* When Zeek or firewall logs stream to Sentinel, `RULE-SCAN-001` detects $\ge 8$ destination ports probed on a single host within 60s, triggering a **High Severity** alert in the analyst queue.
+
+### 4. Triage, Contain & Export Forensic Evidence
+1. Open the **Alerts** queue in Sentinel, click the alert, and review the matched IP addresses, usernames, and raw evidence logs.
+2. Click **"Escalate to Incident"** to promote the finding to a NIST SP 800-61 case file.
+3. In **Incidents**, advance the lifecycle status from `Open` $\rightarrow$ `Investigating` $\rightarrow$ `Containment`.
+4. Add investigation notes classified as `analysis`, `containment_action`, or `forensic_evidence`.
+5. Click **"Export Dossier"** to generate an immutable Markdown incident forensic report for executives and legal counsel.
 
 ---
 
@@ -528,6 +647,29 @@ Key mitigations include:
 ## Deployment Specifications
 
 Complete bare-metal, systemd, and Docker Compose deployment instructions are provided in [`DEPLOYMENT.md`](file:///c:/Users/hp/Downloads/SOC%20Sentinel/DEPLOYMENT.md).
+
+---
+
+## Pushing to Your GitHub Repository
+
+Follow these commands to push Sentinel to your personal GitHub account:
+
+```bash
+# 1. Create a new repository on GitHub (e.g. named "sentinel-soc")
+# Do not initialize with README or .gitignore (this repo already has them)
+
+# 2. Add your GitHub remote (replace with your GitHub username)
+git remote add origin https://github.com/<your-username>/sentinel-soc.git
+
+# 3. Ensure branch is set to main
+git branch -M main
+
+# 4. Push your commits
+git push -u origin main
+```
+
+> [!NOTE]
+> All sensitive files (`.env`, database files, caches, virtual environments, and node_modules) are strictly excluded by [`.gitignore`](.gitignore). Your published repository remains 100% clean and safe for public portfolio presentation.
 
 ---
 

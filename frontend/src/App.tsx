@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Shell } from "./components/layout/Shell";
 import { SummaryCard } from "./components/dashboard/SummaryCard";
 import { EventVolumeChart } from "./components/dashboard/EventVolumeChart";
@@ -48,6 +48,7 @@ export const App: React.FC = () => {
   // Subsystem Health
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthError, setHealthError] = useState<string | null>(null);
+  const initialCheckDone = useRef<boolean>(false);
 
   // Operational Metrics
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -87,6 +88,12 @@ export const App: React.FC = () => {
     } catch (err) {
       setHealthError(err instanceof Error ? err.message : "API offline");
       setHealth(null);
+      // Auto-enable demo mode on first check if backend is unavailable (e.g. static portfolio hosting)
+      if (!initialCheckDone.current) {
+        setDemoMode(true);
+      }
+    } finally {
+      initialCheckDone.current = true;
     }
   }, []);
 
@@ -233,6 +240,26 @@ export const App: React.FC = () => {
                   className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] border border-slate-700 transition-colors"
                 >
                   Retry
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Standalone Cloud Preview Notice */}
+          {healthError && demoMode && (
+            <div className="p-2.5 rounded bg-cyan-950/40 border border-cyan-800/60 text-cyan-200 text-xs font-mono flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+                <span>
+                  <strong className="text-cyan-300">Standalone Web Demo Active:</strong> Interactive telemetry loaded. To connect real-time database queries, run the local FastAPI service.
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={loadHealth}
+                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] border border-slate-700 transition-colors"
+                >
+                  Check Live Backend
                 </button>
               </div>
             </div>
